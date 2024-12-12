@@ -344,7 +344,7 @@ def compute_sharpness():
     if num_batch == 1:
         for bidx, (data, labels) in enumerate(train_loader):
             if bidx == _i_batch:
-                hessian_dataloader = (data, labels); break
+                hessian_dataloader = (data, labels); break #从训练集中提取第 _i_batch 批数据，作为 Hessian 计算的输入。
     else:
         assert False, ('Error: should increase the batch from {}'.format(num_batch))
     print (' : compose Hessian batch...')
@@ -353,11 +353,11 @@ def compute_sharpness():
     """
         Load the networks and loss function
     """
-    netb = load_network(_dataset, _network, _n_class)
+    netb = load_network(_dataset, _network, _n_class) #加载baseline模型
     # netp = load_network(_dataset, _network, _n_class)
 
     # load
-    load_trained_network(netb, _usecuda, _netbase)
+    load_trained_network(netb, _usecuda, _netbase) #加载预训练权重（_netbase）
     # load_trained_network(netp, _usecuda, _netpert)
     if _usecuda:
         netb.cuda();
@@ -387,10 +387,18 @@ def compute_sharpness():
     """
         Compute the Hessian-based sharpness
     """
-    base_hessian = Hessian(netb, taskloss, data=hessian_dataloader, cuda=_usecuda)
+    base_hessian = Hessian(netb, taskloss, data=hessian_dataloader, cuda=_usecuda) #Hessian 是一个辅助类，用于计算模型的 Hessian 矩阵及其相关属性。
     print (' : [Base] set Hessian class, ready to compute')
 
     # compute... base
+    """
+    特征值（Eigenvalues）：
+    提取最大的 5 个特征值，衡量损失曲面的局部曲率。
+    Hessian 的迹（Trace）：
+    衡量 Hessian 矩阵对角元素的和，反映整体曲面尖锐程度。
+    每层的 Hessian 迹：
+    计算每层参数对应的 Hessian 子矩阵的迹，分析每层对曲面尖锐度的贡献。
+    """
     btop_eigenvals, _ = base_hessian.eigenvalues(top_n=5)
     print ('   [Base][Eigenvalues] {}'.format(['{:.2f}'.format(each) for each in btop_eigenvals]))
 
